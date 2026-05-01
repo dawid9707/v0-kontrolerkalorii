@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, useState, useEffect } from 'react'
 import { useDiet } from '@/lib/diet-context'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { format, addDays, subDays, isToday, isYesterday, isTomorrow } from 'date-fns'
@@ -8,6 +8,11 @@ import { pl } from 'date-fns/locale'
 
 export const DateSelector = memo(function DateSelector() {
   const { selectedDate, setSelectedDate } = useDiet()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   const date = useMemo(() => new Date(selectedDate), [selectedDate])
 
@@ -24,11 +29,15 @@ export const DateSelector = memo(function DateSelector() {
   }, [setSelectedDate])
 
   const formattedDate = useMemo(() => {
+    if (!mounted) {
+      // Return a stable string for SSR to avoid hydration mismatch
+      return format(date, 'EEEE, d MMMM', { locale: pl })
+    }
     if (isToday(date)) return 'Dzisiaj'
     if (isYesterday(date)) return 'Wczoraj'
     if (isTomorrow(date)) return 'Jutro'
     return format(date, 'EEEE, d MMMM', { locale: pl })
-  }, [date])
+  }, [date, mounted])
 
   return (
     <div className="flex items-center justify-between p-2 bg-card rounded-[2rem] elevation-1">
